@@ -1,0 +1,83 @@
+plugins {
+    id 'org.springframework.boot' version '2.5.6'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'java'
+    id 'com.google.cloud.tools.jib' version '3.1.4'
+}
+
+group = 'com.example'
+version = '1.0.0'
+sourceCompatibility = '11'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    archiveBaseName = 'test'
+    mainClassName = 'com.example.webdrivertest.WebDriverTestApplication'
+    jacksonVersion = '2.13.0'
+}
+
+jib {
+    allowInsecureRegistries = true
+    from {
+        image='simplebest2k.cafe24.com:5000/v2/openjdk:11-jdk-slim'
+    }
+    to {
+        image = "simplebest2k.cafe24.com:5000/${archiveBaseName}:${version}"
+        tags = ['latest']
+/*        auth {
+            username = 'hskim'
+            password = 'N)p@ss00'
+        }
+        credHelper = 'pass'*/
+    }
+    container {
+        mainClass = "${mainClassName}"
+        creationTime = 'USE_CURRENT_TIMESTAMP'
+        environment = [
+                USE_PROFILE: 'test',
+                SERVER_NAME: 'gccs',
+                SERVER_PORT: '9090',
+                LANG: 'ko_KR.UTF-8',
+                TZ: 'Asia/Seoul'
+        ]
+        volumes = ['/var/tmp']
+        jvmFlags = [
+                '-Xms32m',
+                '-Xmx32m',
+                '-XX:MaxMetaspaceSize=16m',
+                '-Xss128k'
+        ]
+        entrypoint = [
+                'java',
+                '-Dspring.profiles.active=${USE_PROFILE}',
+                '-Dserver.port=${SERVER_PORT}',
+                '-Dfile.encoding=UTF-8',
+                '-Djava.net.preferIPv4Stack=true',
+                '-cp', '/app/resources:/app/classes:/app/libs/*',
+                'com.example.webdrivertest.WebDriverTestApplication'
+        ]
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation 'org.seleniumhq.selenium:selenium-java'
+    implementation 'commons-io:commons-io:2.11.0'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+}
+
+test {
+    useJUnitPlatform()
+}
